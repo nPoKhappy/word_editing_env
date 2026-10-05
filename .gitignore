@@ -1,0 +1,6 @@
+.venv/
+.uv-cache/
+.tmp/
+__pycache__/
+thesis_outline/
+
