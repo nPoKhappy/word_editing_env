@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "library": {
+    "path": "C:\\EndNoteLibraries\\FixtureLibrary.enl"
+  },
+  "style": "IEEE",
+  "citations": [
+    {
+      "id": "thomsen2023",
+      "marker": "{{CITE:thomsen2023}}",
+      "targets": [
+        {
+          "rec_number": 1,
+          "author": "Thomsen",
+          "year": 2023,
+          "doi": "10.0000/fixture.0001"
+        }
+      ],
+      "display": "default",
+      "pages": "45-46"
+    }
+  ],
+  "bibliography": {
+    "expected": true
+  }
+}

@@ -4,3 +4,25 @@
 __pycache__/
 thesis_outline/
 
+# Generated documents and visual QA outputs
+output/
+outputs/
+~$*
+.endnote-backups/
+
+# Local thesis content and document-specific editing jobs
+scripts/chapter3_content.py
+scripts/chapter3_native.py
+scripts/prepare_chapter3.py
+scripts/repair_method_math.py
+scripts/verify_chapter3.py
+scripts/test_word_native_captions.py
+scripts/verify_word_native_captions.py
+
+# Local credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Word 圖表公式標號"
+  short_description: "原生插入標號、既有圖表公式樣式、內文交互參照與自動目錄更新驗證"
+  default_prompt: "使用 $word-native-captions 插入圖、三線表與公式，套用既有樣式、加入內文交互參照，並更新及驗證所有目錄。"
+policy:
+  allow_implicit_invocation: true

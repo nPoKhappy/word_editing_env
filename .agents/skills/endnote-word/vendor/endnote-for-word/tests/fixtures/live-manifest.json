@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "library": {
+    "path": "C:\\EndNoteLibraries\\FixtureLibrary.enl"
+  },
+  "style": "IEEE",
+  "citations": [
+    {
+      "id": "single",
+      "marker": "{{CITE:single}}",
+      "targets": [
+        {
+          "rec_number": 1,
+          "author": "Thomsen",
+          "year": 2023,
+          "doi": "10.0000/fixture.0001"
+        }
+      ],
+      "display": "author-year"
+    },
+    {
+      "id": "citedPages",
+      "marker": "{{CITE:citedPages}}",
+      "targets": [
+        {
+          "rec_number": 2,
+          "author": "Magrin",
+          "year": 2023,
+          "doi": "10.0000/fixture.0002"
+        }
+      ],
+      "display": "default",
+      "pages": "45-46"
+    },
+    {
+      "id": "merged",
+      "marker": "{{CITE:merged}}",
+      "targets": [
+        {
+          "rec_number": 2,
+          "author": "Magrin",
+          "year": 2023,
+          "doi": "10.0000/fixture.0002"
+        },
+        {
+          "rec_number": 3,
+          "author": "Bernhard",
+          "year": 2020,
+          "doi": "10.0000/fixture.0003"
+        }
+      ],
+      "display": "default"
+    }
+  ],
+  "bibliography": {
+    "expected": true
+  }
+}

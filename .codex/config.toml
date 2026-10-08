@@ -1,0 +1,16 @@
+
+
+[mcp_servers.endnote-word-local]
+command = 'D:\word_editing_env\.venv\Scripts\python.exe'
+args = ['-X', 'utf8', 'D:\word_editing_env\.agents\skills\endnote-word\scripts\endnote_mcp.py']
+cwd = 'D:\word_editing_env'
+enabled = true
+startup_timeout_sec = 15
+tool_timeout_sec = 150
+
+[mcp_servers.endnote-word-local.env]
+TEMP = 'D:\word_editing_env\.tmp'
+TMP = 'D:\word_editing_env\.tmp'
+ENDNOTE_WORD_POWERSHELL = 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+ENDNOTE_WORD_TIMEOUT_SECONDS = '120'
+PYTHONDONTWRITEBYTECODE = '1'

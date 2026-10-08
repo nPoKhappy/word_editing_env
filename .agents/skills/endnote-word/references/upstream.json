@@ -1,0 +1,14 @@
+{
+  "repository": "https://github.com/felimet/endnote-for-word",
+  "commit": "69a5bb2be8d12e4129654df5fb30da3886139fb0",
+  "license": "MIT",
+  "vendor_changes": [
+    "Normalized fixture-references.ris to required CRLF (no production code changes)."
+  ],
+  "local_extensions": [
+    "Manual group search",
+    "Targeted insertion from existing records without mandatory DOI",
+    "Single standalone citation removal",
+    "Owned Word PID timeout cleanup"
+  ]
+}
