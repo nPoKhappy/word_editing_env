@@ -18,6 +18,12 @@ scripts/repair_method_math.py
 scripts/verify_chapter3.py
 scripts/test_word_native_captions.py
 scripts/verify_word_native_captions.py
+scripts/chapter4_front_content.py
+scripts/chapter4_front_native.py
+scripts/fix_heading3_bold.py
+scripts/inspect_heading3.py
+/case study 參考怎麼寫的參考論文/
+/期刊投稿寫法_老師會議重點_2026-10-14.md
 
 # Local credentials
 .env

@@ -115,7 +115,10 @@ def edit(args):
                 area.Font.NameOther = "Times New Roman"
                 session.refresh()
                 print(f"Updated: {old!r} -> {new!r}", flush=True)
-            update_directories(document)
+            if args.defer_directories:
+                print("Directory updates deferred to the caller's final structural-edit phase.", flush=True)
+            else:
+                update_directories(document)
             document.Save()
             session.refresh()
             # A newly visible working copy remains open for review after success.
@@ -133,6 +136,8 @@ if __name__ == "__main__":
     destination.add_argument("--in-place", action="store_true")
     destination.add_argument("--output", type=Path)
     parser.add_argument("--visible", action="store_true", help="Show a new Word window and leave it open after success")
+    parser.add_argument("--defer-directories", action="store_true",
+                        help="For a multi-step edit only: caller must update and verify all native directories before delivery")
     parser.add_argument("--timeout", type=int, default=120)
     parser.add_argument("--worker-state", help=argparse.SUPPRESS)
     args = parser.parse_args()

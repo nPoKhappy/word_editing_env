@@ -98,8 +98,22 @@ def worker(args):
                     continue
                 index, table, text = matches[0]
                 report['checked_tables'] += 1
-                check_font(report, f'table {index} containing {needle!r}',
-                           table.Range.Font, text.replace('\r\x07', ' | '))
+                font = table.Range.Font
+                if float(font.Size) == 9999999 or float(font.SizeBi) == 9999999:
+                    # Word can report wdUndefined for an entire table even when
+                    # every cell and row marker has the same size. Inspect the
+                    # actual cells and row markers rather than accepting or
+                    # rejecting that aggregate value as evidence.
+                    for cell_index, cell in enumerate(table.Range.Cells, 1):
+                        check_font(report, f'table {index}: cell {cell_index}',
+                                   cell.Range.Font, cell.Range.Text)
+                    for row in table.Rows:
+                        marker = doc.Range(row.Range.End - 1, row.Range.End)
+                        check_font(report, f'table {index}: row {row.Index} marker',
+                                   marker.Font)
+                else:
+                    check_font(report, f'table {index} containing {needle!r}',
+                               font, text.replace('\r\x07', ' | '))
         report['status'] = 'FAIL' if report['issues'] else 'PASS'
         if args.report:
             output = Path(args.report)
