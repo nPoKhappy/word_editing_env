@@ -1024,6 +1024,27 @@ function Resolve-EndNoteImportLibrary {
     return [ordered]@{ library = $created; created = $true; template_path = $template.path }
 }
 
+function Test-EndNoteImportWindowTitle {
+    param([string]$Title,[string]$LibraryFile)
+    $name = [IO.Path]::GetFileName($LibraryFile)
+    $stem = [IO.Path]::GetFileNameWithoutExtension($LibraryFile)
+    return ($Title.EndsWith(' - ' + $name,[StringComparison]::OrdinalIgnoreCase) -or
+            $Title.EndsWith(' - ' + $stem,[StringComparison]::OrdinalIgnoreCase))
+}
+
+function Get-EndNoteNativeLibraryConfirmation {
+    param([int]$ProcessId,[string]$LibraryFile)
+    $localRoot = Split-Path -Parent (Split-Path -Parent $script:PluginRoot)
+    $helper = Join-Path $localRoot 'scripts\endnote_native_state.py'
+    if (-not (Test-Path -LiteralPath $helper -PathType Leaf)) {return $null}
+    $python = Resolve-PythonExecutable
+    $arguments = @((ConvertTo-ProcessArgument $helper),'--pid',[string]$ProcessId,
+                   '--library',(ConvertTo-ProcessArgument $LibraryFile)) -join ' '
+    $result = Invoke-HiddenProcess -Executable $python -Arguments $arguments
+    if ($result.exit_code -ne 0) {return $null}
+    try {return ($result.stdout | ConvertFrom-Json)} catch {return $null}
+}
+
 function Open-EndNoteLibraryForImport {
     param(
         [Parameter(Mandatory)][string]$LibraryFile,
@@ -1036,7 +1057,7 @@ function Open-EndNoteLibraryForImport {
     if (-not [string]::IsNullOrWhiteSpace($recentBefore) -and
         [string]::Equals($recentBefore, $fullLibrary, [StringComparison]::OrdinalIgnoreCase)) {
         foreach ($process in @(Get-Process -Name $script:EndNoteProcessName -ErrorAction SilentlyContinue)) {
-            if ($process.MainWindowHandle -ne 0 -and $process.MainWindowTitle -like "* - $fileName") {
+            if ($process.MainWindowHandle -ne 0 -and (Test-EndNoteImportWindowTitle $process.MainWindowTitle $fullLibrary)) {
                 $preexisting = $true
                 break
             }
@@ -1051,14 +1072,16 @@ function Open-EndNoteLibraryForImport {
     while ([DateTime]::UtcNow -lt $deadline) {
         $recentLibrary = Get-EndNoteMostRecentLibraryPath
         foreach ($process in @(Get-Process -Name $script:EndNoteProcessName -ErrorAction SilentlyContinue)) {
-            if ($process.MainWindowHandle -ne 0 -and $process.MainWindowTitle -like "* - $fileName" -and
-                -not [string]::IsNullOrWhiteSpace($recentLibrary) -and
-                [string]::Equals($recentLibrary, $fullLibrary, [StringComparison]::OrdinalIgnoreCase)) {
+            $confirmation = $null
+            if ($process.MainWindowHandle -ne 0 -and (Test-EndNoteImportWindowTitle $process.MainWindowTitle $fullLibrary)) {
+                $confirmation = Get-EndNoteNativeLibraryConfirmation -ProcessId $process.Id -LibraryFile $fullLibrary
+            }
+            if ($null -ne $confirmation -and $confirmation.ok) {
                 return [ordered]@{
                     preexisting = $preexisting
                     process_id = $process.Id
                     title = $process.MainWindowTitle
-                    confirmed_library_path = $recentLibrary
+                    confirmed_library_path = $confirmation.confirmed_library_path
                 }
             }
         }

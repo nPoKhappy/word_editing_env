@@ -1,0 +1,4 @@
+interface:
+  display_name: "JTICE 期刊格式"
+  short_description: "依官方指南檢查 JTICE 稿件、圖表、文獻與附件格式"
+  default_prompt: "請用 $jtice-format 依 JTICE 官方格式檢查我的稿件與投稿附件，列出不符項目及待確認項目。"

@@ -3,12 +3,17 @@
   "commit": "69a5bb2be8d12e4129654df5fb30da3886139fb0",
   "license": "MIT",
   "vendor_changes": [
-    "Normalized fixture-references.ris to required CRLF (no production code changes)."
+    "Normalized fixture-references.ris to required CRLF.",
+    "Windows native import readiness: accept EndNote window titles with or without .enl; confirm exact open library via process handles instead of stale MRU registry state."
   ],
   "local_extensions": [
     "Manual group search",
     "Targeted insertion from existing records without mandatory DOI",
     "Single standalone citation removal",
-    "Owned Word PID timeout cleanup"
+    "Owned Word PID timeout cleanup",
+    "Verified title/DOI/link/PDF DOI native import and deduplication",
+    "Transactional batch CWYW editing",
+    "JTICE preflight and record/term/style diagnostics",
+    "Existing citecheck, endnote-mcp and EndNote CLI read-only adapters"
   ]
 }

@@ -28,9 +28,51 @@ def plan_replacements(document, changes):
             raise ValueError("Use nonempty literal text without paragraph/control characters.")
         found = []
         field_matches = 0
-        position = document.Content.Start
-        while position < document.Content.End:
-            area = document.Range(position, document.Content.End)
+        paragraph_index = change.get("paragraph_index")
+        if paragraph_index is not None:
+            if not isinstance(paragraph_index, int) or isinstance(paragraph_index, bool) or not 1 <= paragraph_index <= document.Paragraphs.Count:
+                raise ValueError("paragraph_index must identify an existing paragraph")
+            scope = document.Paragraphs.Item(paragraph_index).Range
+            # Word Find needs the terminal paragraph mark in its search range
+            # to match literal text ending exactly at the paragraph boundary.
+            scope_start, scope_end = scope.Start, scope.End
+            spans = sorted((max(scope_start, a), min(scope_end, b))
+                           for a, b in protected if a < scope_end and b > scope_start)
+            chunks = []
+            cursor = scope_start
+            for a, b in spans:
+                if a < cursor:
+                    raise ValueError("Overlapping protected fields in scoped paragraph")
+                chunks.append((cursor, a))
+                cursor = b
+            chunks.append((cursor, scope_end))
+            segment = change.get("segment_index")
+            if segment is not None:
+                if not isinstance(segment, int) or isinstance(segment, bool) or not 0 <= segment < len(chunks):
+                    raise ValueError("segment_index must identify a literal span between fields")
+                chunks = [chunks[segment]]
+            # Literal offsets are mapped to Word's UTF-16 positions. Searching
+            # field-free chunks avoids Word Find escaping a terminal range.
+            for a, b in chunks:
+                literal = document.Range(a, b).Text
+                offset = 0
+                while (hit := literal.find(old, offset)) >= 0:
+                    start = a + len(literal[:hit].encode("utf-16-le")) // 2
+                    end = start + len(old.encode("utf-16-le")) // 2
+                    if document.Range(start, end).Text != old:
+                        raise ValueError("Scoped literal range does not match")
+                    found.append((start, end, old, new))
+                    offset = hit + len(old)
+            expected = change.get("count", 1)
+            if not isinstance(expected, int) or isinstance(expected, bool) or expected <= 0 or len(found) != expected:
+                raise ValueError(f"Expected {expected} scoped editable occurrence(s) in paragraph {paragraph_index}, found {len(found)}")
+            targets.extend(found)
+            continue
+        else:
+            scope_start, scope_end = document.Content.Start, document.Content.End
+        position = scope_start
+        while position < scope_end:
+            area = document.Range(position, scope_end)
             search = area.Find
             search.ClearFormatting()
             matched = search.Execute(FindText=old.replace("^", "^^"), MatchCase=True,

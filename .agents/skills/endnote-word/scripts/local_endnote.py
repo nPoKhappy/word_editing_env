@@ -249,6 +249,12 @@ def edit_citation(args, action):
         raise ValueError('Output exists; choose a new path.')
     if not str(args.get('paragraph_text','')).strip():
         raise ValueError('paragraph_text is required to bound the change.')
+    if 'anchor_text' in args and not str(args['anchor_text']).strip():
+        raise ValueError('anchor_text must be nonempty literal body text.')
+    if args.get('position','after') not in ('before','after'):
+        raise ValueError('position must be before or after.')
+    if action == 'move' and not args.get('anchor_text'):
+        raise ValueError('Moving a citation requires anchor_text.')
     original_hash = hashlib.sha256(source.read_bytes()).hexdigest()
     before = inspect_document(source)
     if any(c['part'] != 'word/document.xml' for c in before['citations']):
@@ -278,7 +284,7 @@ def edit_citation(args, action):
         if not result.get('ok'):
             return result
         after = inspect_document(scratch)
-        expected_count = before['citation_count'] + (1 if action=='insert' else -1)
+        expected_count = before['citation_count'] + (1 if action=='insert' else -1 if action=='remove' else 0)
         if after['citation_count'] != expected_count:
             raise ValueError('Stored citation-field count did not match the requested operation.')
         if action == 'insert':
@@ -291,7 +297,7 @@ def edit_citation(args, action):
         if action == 'insert':
             key = (record['rec_number'],record['title'],record['first_author_surname'],record['year'])
             expected[key] += 1
-        else:
+        elif action == 'remove':
             removed = [key for key in expected if key[0] == args['rec_number'] and key[1] == args['expected_title']]
             if len(removed) != 1:
                 raise ValueError('Removal identity is ambiguous in stored citation data.')

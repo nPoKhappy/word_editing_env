@@ -110,6 +110,15 @@ class LocalTests(unittest.TestCase):
             self.assertNotIn('output_path', schema['required'])
         self.assertEqual(responses[2]['result']['structuredContent']['references'][0]['rec_number'],55)
 
+    def test_sentence_tools_have_explicit_literal_anchor_and_position(self):
+        sys.path.insert(0, str(ROOT/'scripts'))
+        import endnote_mcp as server
+        for name in ('insert_endnote_citation_at_text', 'move_endnote_citation_to_text'):
+            schema = server.EXTRA_BY_NAME[name]['inputSchema']
+            self.assertIn('anchor_text', schema['required'])
+            self.assertEqual(schema['properties']['position']['enum'], ['before', 'after'])
+        self.assertNotIn('anchor_text', server.EXTRA_BY_NAME['insert_endnote_citation_after_paragraph']['inputSchema']['required'])
+
     def test_source_or_existing_output_rejected_before_word(self):
         with patch.object(local,'_invoke_local') as word:
             with self.assertRaisesRegex(ValueError,'separate'):

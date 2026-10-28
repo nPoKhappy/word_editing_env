@@ -160,7 +160,7 @@ def run_bounded(script, arguments, timeout):
         raise ValueError("timeout must be positive")
     with tempfile.TemporaryDirectory(prefix="word-worker-", dir=LOCAL_TEMP) as directory:
         state = Path(directory) / "owned-word.json"
-        command = [sys.executable, "-u", str(script), *arguments, "--worker-state", str(state)]
+        command = [sys.executable, "-X", "utf8", "-u", str(script), *arguments, "--worker-state", str(state)]
         worker = subprocess.Popen(command)
         try:
             return worker.wait(timeout=timeout)

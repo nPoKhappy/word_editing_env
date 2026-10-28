@@ -13,4 +13,39 @@ TEMP = 'D:\word_editing_env\.tmp'
 TMP = 'D:\word_editing_env\.tmp'
 ENDNOTE_WORD_POWERSHELL = 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
 ENDNOTE_WORD_TIMEOUT_SECONDS = '120'
+ENDNOTE_READY_TIMEOUT_MS = '20000'
 PYTHONDONTWRITEBYTECODE = '1'
+
+[mcp_servers.endnote-library-search]
+command = 'D:\word_editing_env\.venv\Scripts\python.exe'
+args = ['-X', 'utf8', 'D:\word_editing_env\.agents\skills\endnote-word\scripts\endnote_library_runner.py', 'serve']
+cwd = 'D:\word_editing_env'
+enabled = true
+startup_timeout_sec = 30
+tool_timeout_sec = 150
+
+[mcp_servers.endnote-library-search.env]
+TEMP = 'D:\word_editing_env\.tmp'
+TMP = 'D:\word_editing_env\.tmp'
+PYTHONDONTWRITEBYTECODE = '1'
+
+[mcp_servers.endnote-reference-check]
+command = 'C:\Program Files\nodejs\node.exe'
+args = ['--import', 'file:///D:/word_editing_env/.tools/endnote/citecheck/node_modules/tsx/dist/loader.mjs', 'D:\word_editing_env\.tools\endnote\citecheck\node_modules\@jhlee0619\citecheck\src\mcp.ts']
+cwd = 'D:\word_editing_env'
+enabled = true
+startup_timeout_sec = 20
+tool_timeout_sec = 150
+disabled_tools = ['apply_reference_rewrite']
+
+[mcp_servers.endnote-reference-check.env]
+CITECHECK_PYTHON = 'D:\word_editing_env\.venv\Scripts\python.exe'
+REFFORGE_ENABLE_SEMANTIC_SCHOLAR = 'true'
+REFFORGE_HTTP_TIMEOUT_MS = '7000'
+REFFORGE_HTTP_MAX_RETRIES = '0'
+REFFORGE_PUBMED_RETRIES = '0'
+REFFORGE_CROSSREF_RETRIES = '0'
+REFFORGE_ARXIV_RETRIES = '0'
+REFFORGE_SEMANTIC_SCHOLAR_RETRIES = '0'
+TEMP = 'D:\word_editing_env\.tmp'
+TMP = 'D:\word_editing_env\.tmp'

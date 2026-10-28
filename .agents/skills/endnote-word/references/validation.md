@@ -1,5 +1,36 @@
 # Validation record
 
+2026-10-23, server 1.5.0 (current extension validation):
+
+- Local suite: 58 tests passed. Vendored upstream suite: 74 tests, 72 passed / two optional integration tests skipped. New coverage includes exact-path native readiness, title-search constraints, ambiguity/DOI mismatch, unknown import outcomes, duplicate journal terms with equal abbreviations, stored metadata versus style omissions, batch failure publication, backup restore and complete snapshot freshness. An actual same-size SQLite edit exposed timestamp-only freshness unreliability; content hashes now detect it.
+- Fresh stdio MCP initialization/catalog/calls passed: local 44 tools, search 12 tools, citecheck six raw tools. Configuration disables citecheck's direct rewrite tool, leaving 61 configured tools total. Configuration TOML parsed, preserved unrelated servers and `codex mcp list` outside the restricted sandbox confirmed all three EndNote servers enabled. Existing app catalog reload remains required.
+- Live native import used only an isolated copy of the shipped EndNote sample library. Fixed public DOI `10.1038/nature14539` was imported via native Direct Export as record 2470 (190 → 191 live references), with exact target path confirmed. Repeating resolution by title/author/year returned `already_present` record 2470 in 2.086 seconds without another native import. Registry title matching uses the title query field and supplied author/year constraints.
+- Native import readiness initially reproduced two 90-second false waits: EndNote's window omits `.enl`, and its MRU registry entry can remain on another library. The compatibility patch accepts both observed title forms and requires native process open-file evidence for the exact requested library. The subsequent public sample import completed in about 3.4 seconds. `ENDNOTE_READY_TIMEOUT_MS=20000` is configured; this is not a general latency guarantee.
+- Native batch fixtures: two inserted references, one owned Word session, one CWYW format, 3.289 seconds. A second move/remove batch retained one citation, one owned session and one format, 3.104 seconds. Source body and native identities were checked. These scratch DOCX fixtures were not rendered and are not manuscript deliverables.
+- Existing research library read/index only: 57 records, 17 PDFs, 233 indexed PDF pages, 57 local CPU embeddings. All 17 nested-path PDFs extracted; real FTS and semantic results passed through the search MCP. Local index checks now include database/WAL content signatures. Refresh is required after attachment changes; PDF-only changes are not automatically fingerprinted.
+- Public sample citecheck DOCX online analysis passed with a Semantic Scholar 429/degraded-verification warning preserved. Provider rate limits are not interpreted as nonexistent papers. Citation matching logic was reused from the installed package; only Windows ZIP extraction was patched.
+- Read-only preflight of the existing English JTICE v2 found 24 native citations / 20 distinct records, five tables, four media objects, 22 editable equations and 31 unique journal terms. Preflight does not establish source support, inherited Word sizes, figure resolution or rendered quality.
+
+Current reports: `.tools/endnote/validation/mcp-smoke.json`, `mcp-smoke-public-online.json`, `import-native/title-dedup-result.json`, `jtice-preflight.json`; native import evidence under `.tools/endnote/imports/20261023T095942Z-9f7aa072/`. The user's manuscripts and research records were not edited by these tests. See the workspace report `outputs/endnote_jtice_workflow_audit_20261023.md` for investigation evidence and limits.
+
+2026-10-23, server 1.2.0: added `insert_endnote_citation_at_text` and
+`move_endnote_citation_to_text`. Both resolve a unique literal anchor within
+a unique main-body paragraph; they preserve native CWYW fields and refuse
+merged-field movement. The legacy paragraph-end tool retains its original
+semantics. An already correctly placed citation is a validated no-op.
+
+- Local suite: 21 tests passed, including the fresh MCP catalog and anchor
+  parameters. A live manuscript run completed 12 native field moves and 12
+  native insertions, yielding 24 citation fields and 20 distinct records.
+- Content preservation, citation identities and native bibliography counts
+  were checked after each operation before publication.
+- Bibliographic record fields and journal-term abbreviations still require
+  verified native EndNote editing; these MCP tools do not write the library
+  database. Web research is available through scholarly/web tools rather than
+  a bundled automatic metadata repair operation.
+- Existing app sessions need MCP reload to expose the new schema. The one-shot
+  CLI is immediately usable. These checks do not replace final rendered QA.
+
 Date: 2026-10-07. Local environment: Windows, Word 16.0, EndNote 2025 22.3.1 build 19926, Windows PowerShell 5.1, workspace Python 3.12.
 
 - Upstream commit: `69a5bb2be8d12e4129654df5fb30da3886139fb0`.

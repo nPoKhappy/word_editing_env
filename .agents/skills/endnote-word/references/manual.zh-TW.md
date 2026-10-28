@@ -1,6 +1,6 @@
 # EndNote Word 技能操作說明
 
-這個本機技能採用 [felimet/endnote-for-word](https://github.com/felimet/endnote-for-word) 作為基礎，透過 Word COM 呼叫 EndNote 的 Cite While You Write（CWYW），不使用 Computer Use。上游版本與授權記錄在 `upstream.json`，MIT 授權保留於 `../vendor/endnote-for-word/LICENSE`。新增功能沒有修改上游正式程式碼。
+這個本機技能採用 [felimet/endnote-for-word](https://github.com/felimet/endnote-for-word) 作為基礎，透過 Word COM 呼叫 EndNote 的 Cite While You Write（CWYW），不使用 Computer Use。上游版本、原生匯入就緒判定的相容性修補與授權記錄在 `upstream.json`，MIT 授權保留於 `../vendor/endnote-for-word/LICENSE`。1.5.0 的線上查證／自動匯入、批次引用、縮寫診斷、PDF 搜尋及現成套件整合見 [extensions.md](extensions.md)。
 
 ## 安裝位置與啟動
 
@@ -12,7 +12,7 @@
 
 MCP 同時登錄於使用者設定 `C:\Users\Administrator\.codex\config.toml` 與此工作區的 `.codex/config.toml`，因此 CLI 的 MCP 清單不再依賴當前資料夾。技能本身仍放在 `D:\word_editing_env`；在該專案工作可自動找到技能。修改 MCP 設定後，需重新啟動 Codex／重新載入 MCP，既有對話的工具清單不會立即新增。設定方式遵循 [官方 MCP 文件](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)。保留其他 MCP 與信任設定；使用者設定的變更前備份位於工作區 `.tmp`。
 
-MCP 名稱為 `endnote-word-local`。不依賴外部帳號、API key 或額外 MCP SDK；Python 使用標準函式庫。需安裝桌面版 Word、桌面版 EndNote 及啟用 CWYW。原生欄位由 EndNote 產生，EndNote 必須能找到指定文獻庫。讀取群組只會操作暫存資料庫副本。
+原生 MCP 名稱為 `endnote-word-local`，另登錄 `endnote-library-search` 與 `endnote-reference-check`。原生橋接不需額外 MCP SDK；擴充的搜尋／查證套件獨立安裝於 `.tools/endnote`，不需外部帳號或 API key。線上查證會送出選定書目欄位至公開索引；本機全文／語意搜尋使用快取。需安裝桌面版 Word、桌面版 EndNote 及啟用 CWYW。原生欄位由 EndNote 產生，EndNote 必須能找到指定文獻庫。讀取群組只會操作暫存資料庫副本。
 
 可直接執行單一工具。JSON 檔使用 UTF-8；JSON 的 Windows 路徑反斜線需寫成 `\\`，也可使用 `/`。
 
@@ -75,7 +75,21 @@ $env:ENDNOTE_WORD_TIMEOUT_SECONDS = '120'
 
 程式核對文獻庫中的編號與完整標題，以及可選的群組歸屬，再在唯一匹配段落的最後插入暫時引用。`ENFormatBibliography` 將其轉為正式 `ADDIN EN.CITE`，並產生 `ADDIN EN.REFLIST`。標題、作者、年份及紀錄編號必須符合真實文獻，才會發布結果。
 
-段落定位使用包含匹配，實際插入點是整段最後，不是該子字串正後方。若需要句中插入，此工具尚未支援。來源須為已有且沒有未處理追蹤修訂的 DOCX，目標須為正文、非表格段落；同一紀錄在該段已有引用時會拒絕重複插入。
+上述舊工具的段落定位使用包含匹配，實際插入點是整段最後。句中引用請改用 `insert_endnote_citation_at_text`，不要將段尾工具當作句中插入。來源須為已有且沒有未處理追蹤修訂的 DOCX，目標須為正文、非表格段落。
+
+## 句中插入及移動（1.2.0）
+
+`insert_endnote_citation_at_text` 沿用 input/output、library、record、title 參數，另要求 `anchor_text`，並接受 `position: "after"`（預設）或 `"before"`。`paragraph_text` 必須唯一對應一段，`anchor_text` 必須在該段唯一且不與欄位重疊。例如將 `anchor_text` 設為 `Chou et al.`，可將該文獻置於作者姓名之後。數字引用前後的英文空白及標點由正文負責。
+
+`move_endnote_citation_to_text` 不需要 library_path；以既有 record/title 識別單筆原生欄位並移到指定 anchor。它搬移完整的原生 CWYW 欄位，之後用 CWYW 重建文獻表。合併多筆欄位會拒絕；已在指定位置則驗證後不移動。`remove_preceding_space` 預設 true，只處理舊插入位置的一個分隔空白。
+
+兩者沿用交易式驗證與 `overwrite=true` 自動備份。全段提到不同研究時應逐篇定位，不能把全部引文集中在段尾。MCP 重新載入後才顯示新增工具；單次 CLI 可立即呼叫。
+
+## 書目欄位及期刊縮寫維護
+
+本 MCP 現已提供線上名稱／DOI 查證和原生自動匯入新記錄；`import_verified_endnote_reference` 會核對身分、去重並回讀真實記錄編號。現有記錄的欄位及期刊詞表仍沒有已驗證的原生自動回寫 API。使用內建查證／診斷工具核對出版社、DOI、卷號、頁碼或文章編號，再經授權的 EndNote 原生介面修改；不得直接寫 SQLite，也不要匯入另一篇同名記錄取代核對。缺 DOI 不阻止引用。
+
+期刊縮寫同時取決於 output style 的 Journal Names 設定及 Journals term list。匯入詞表後須檢查同名舊詞條是否仍有空白 Abbreviation 1；同名重複詞條即使各自填上相同縮寫，仍可能使 CWYW 保留全名。先備份完整四欄詞表及合併預覽，依適用的 UI 確認規則取得刪除／重建授權，再用 EndNote 原生匯入唯一名稱表。以唯讀快照核對名稱唯一、記錄數不變，最後驗證 Word 實際輸出；不能只因詞表匯入成功就宣稱縮寫修好。會議、書章及預印本依其真實類型核對，不為填滿欄位捏造卷號或頁碼。
 
 既有文獻 DOI 未填仍可引用。程式不補寫 DOI、不新增重複文獻，只有明確設定 `overwrite=true` 才更新來源文件。保留文件目前的引用樣式；若要更換樣式，另用上游 `list_endnote_styles`、`set_endnote_citation_style`，依使用者要求操作。
 
