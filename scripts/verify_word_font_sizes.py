@@ -66,9 +66,11 @@ def worker(args):
         report['saved_at_audit_start'] = bool(doc.Saved)
         if args.directories:
             total = doc.TablesOfContents.Count + doc.TablesOfFigures.Count
-            if not total:
+            if not total and not args.allow_no_directories:
                 report['issues'].append({'location': 'directories',
                                          'error': 'No native directories found.'})
+            if not total and args.allow_no_directories:
+                report['directories'] = 'not applicable: no native directories present'
             style_ids = set()
             for index in range(1, doc.TablesOfContents.Count + 1):
                 item = doc.TablesOfContents.Item(index)
@@ -134,6 +136,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('document')
     parser.add_argument('--directories', action='store_true')
+    parser.add_argument('--allow-no-directories', action='store_true',
+                        help='Report absent directories as not applicable; still audit all existing entries and styles.')
     parser.add_argument('--table-text', action='append', default=[])
     parser.add_argument('--expected-size', type=float, default=12)
     parser.add_argument('--report')

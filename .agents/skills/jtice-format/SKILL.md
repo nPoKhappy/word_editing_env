@@ -48,7 +48,7 @@ EndNote 的會議／書章卷號可能存在於記錄中而未被樣式輸出；
 
 實際編輯 Word 時遵守目標工作區的 AGENTS.md，並讀取可用的 word-editing／docx-text-ops／docx-design-ops 等相應技能。這些工具操作規範不等於 JTICE 要求。
 
-在 `D:\word_editing_env`：使用其 `.venv\Scripts\python.exe`；Word 自動化前設定本機 TEMP/TMP；新增英文用 Times New Roman；中文工作註解依工作區用標楷體；一般內文及表格維持 12 pt，設定普通與複雜文字字級。依當地規定更新、驗證**既有**原生目錄與交互參照，執行字級檢查和視覺 QA。JTICE 指南未要求稿件新建論文目錄、圖目錄、表目錄或公式目錄，不因本機驗證程序而自動新增。
+在 `D:\word_editing_env_officeCLI`：使用其 `.venv\Scripts\python.exe`；Word 自動化前設定本機 TEMP/TMP；新增英文用 Times New Roman；中文工作註解依工作區用標楷體；一般內文及表格維持 12 pt，設定普通與複雜文字字級。依當地規定更新、驗證**既有**原生目錄與交互參照，執行字級檢查和視覺 QA。JTICE 指南未要求稿件新建論文目錄、圖目錄、表目錄或公式目錄，不因本機驗證程序而自動新增。
 
 保留 Word 工作母檔的原生 EndNote/CWYW 欄位。官方要求提交稿移除文獻管理器 field codes；僅在準備實際提交檔時，另製出版副本並核對移除前後引文、文獻、公式與圖表編號一致。不要對母檔全面 unlink fields。
 

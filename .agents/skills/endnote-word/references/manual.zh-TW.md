@@ -4,26 +4,26 @@
 
 ## 安裝位置與啟動
 
-- 技能：`D:\word_editing_env\.agents\skills\endnote-word`
+- 技能：`D:\word_editing_env_officeCLI\.agents\skills\endnote-word`
 - MCP 入口：`scripts\endnote_mcp.py`
 - 本機擴充：`scripts\local_endnote.py`、`scripts\edit-citation.ps1`
 - 上游程式與測試：`vendor\endnote-for-word`
-- 工作區 MCP 設定：`D:\word_editing_env\.codex\config.toml`
+- 工作區 MCP 設定：`D:\word_editing_env_officeCLI\.codex\config.toml`
 
-MCP 同時登錄於使用者設定 `C:\Users\Administrator\.codex\config.toml` 與此工作區的 `.codex/config.toml`，因此 CLI 的 MCP 清單不再依賴當前資料夾。技能本身仍放在 `D:\word_editing_env`；在該專案工作可自動找到技能。修改 MCP 設定後，需重新啟動 Codex／重新載入 MCP，既有對話的工具清單不會立即新增。設定方式遵循 [官方 MCP 文件](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)。保留其他 MCP 與信任設定；使用者設定的變更前備份位於工作區 `.tmp`。
+此專案 MCP 設定使用本 checkout 的執行環境、腳本與狀態快照；本次沒有修改全域 MCP 設定。更改專案設定後須重新載入連線，既有對話中的服務不會自動切換。
 
 原生 MCP 名稱為 `endnote-word-local`，另登錄 `endnote-library-search` 與 `endnote-reference-check`。原生橋接不需額外 MCP SDK；擴充的搜尋／查證套件獨立安裝於 `.tools/endnote`，不需外部帳號或 API key。線上查證會送出選定書目欄位至公開索引；本機全文／語意搜尋使用快取。需安裝桌面版 Word、桌面版 EndNote 及啟用 CWYW。原生欄位由 EndNote 產生，EndNote 必須能找到指定文獻庫。讀取群組只會操作暫存資料庫副本。
 
 可直接執行單一工具。JSON 檔使用 UTF-8；JSON 的 Windows 路徑反斜線需寫成 `\\`，也可使用 `/`。
 
 ```powershell
-$env:TEMP = 'D:\word_editing_env\.tmp'
+$env:TEMP = 'D:\word_editing_env_officeCLI\.tmp'
 $env:TMP = $env:TEMP
 $env:ENDNOTE_WORD_POWERSHELL = 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
 $env:ENDNOTE_WORD_TIMEOUT_SECONDS = '120'
-& 'D:\word_editing_env\.venv\Scripts\python.exe' -X utf8 `
-  'D:\word_editing_env\.agents\skills\endnote-word\scripts\endnote_mcp.py' `
-  --call search_endnote_group --arguments 'D:\word_editing_env\.tmp\search.json'
+& 'D:\word_editing_env_officeCLI\.venv\Scripts\python.exe' -X utf8 `
+  'D:\word_editing_env_officeCLI\.agents\skills\endnote-word\scripts\endnote_mcp.py' `
+  --call search_endnote_group --arguments 'D:\word_editing_env_officeCLI\.tmp\search.json'
 ```
 
 省略 `--call` 時，程式以 stdio MCP 模式運作。stdout 只傳輸 JSON；程序紀錄送到 stderr。CLI 的退出碼 0 表示成功，1 表示失敗；查看回傳的 `ok`、`error` 與驗證結果。
@@ -59,8 +59,8 @@ $env:ENDNOTE_WORD_TIMEOUT_SECONDS = '120'
 
 ```json
 {
-  "input_path":"D:/word_editing_env/thesis_outline/改良型克勞斯製程論文章節與研究流程規劃_修正版_3_範圍定義更正.docx",
-  "output_path":"D:/word_editing_env/thesis_outline/計畫書_新增引用.docx",
+  "input_path":"D:/word_editing_env_officeCLI/thesis_outline/改良型克勞斯製程論文章節與研究流程規劃_修正版_3_範圍定義更正.docx",
+  "output_path":"D:/word_editing_env_officeCLI/thesis_outline/計畫書_新增引用.docx",
   "library_path":"D:/My_Research_References.enl",
   "group":"Claus",
   "rec_number":55,
@@ -99,8 +99,8 @@ $env:ENDNOTE_WORD_TIMEOUT_SECONDS = '120'
 
 ```json
 {
-  "input_path":"D:/word_editing_env/thesis_outline/計畫書_新增引用.docx",
-  "output_path":"D:/word_editing_env/thesis_outline/計畫書_移除引用.docx",
+  "input_path":"D:/word_editing_env_officeCLI/thesis_outline/計畫書_新增引用.docx",
+  "output_path":"D:/word_editing_env_officeCLI/thesis_outline/計畫書_移除引用.docx",
   "rec_number":55,
   "expected_title":"Advanced process control for sulfur recovery units by artificial intelligence (AI) surrogate model",
   "paragraph_text":"引用代表性原始研究，連結尾氣品質估測。",
@@ -131,10 +131,10 @@ $env:ENDNOTE_WORD_TIMEOUT_SECONDS = '120'
 ## 驗證与維護
 
 ```powershell
-& 'D:\word_editing_env\.venv\Scripts\python.exe' -X utf8 -m unittest discover `
-  -s 'D:\word_editing_env\.agents\skills\endnote-word\tests' -v
-& 'D:\word_editing_env\.venv\Scripts\python.exe' -X utf8 -m unittest discover `
-  -s 'D:\word_editing_env\.agents\skills\endnote-word\vendor\endnote-for-word\tests' `
+& 'D:\word_editing_env_officeCLI\.venv\Scripts\python.exe' -X utf8 -m unittest discover `
+  -s 'D:\word_editing_env_officeCLI\.agents\skills\endnote-word\tests' -v
+& 'D:\word_editing_env_officeCLI\.venv\Scripts\python.exe' -X utf8 -m unittest discover `
+  -s 'D:\word_editing_env_officeCLI\.agents\skills\endnote-word\vendor\endnote-for-word\tests' `
   -p 'test_*.py'
 ```
 

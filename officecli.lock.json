@@ -1,0 +1,14 @@
+{
+  "repository": "iOfficeAI/OfficeCLI",
+  "version": "1.0.159",
+  "assets": {
+    "X64": {
+      "name": "officecli-win-x64.exe",
+      "sha256": "572c0a4da35333cf866fa5a2fb8259a4a2a8c9922be031d6b7a86936282ef94e"
+    },
+    "Arm64": {
+      "name": "officecli-win-arm64.exe",
+      "sha256": "2769867fb1bd19e1b33acdf9e69d0d94e6dc9ffa2425819e602a4c40ed83a997"
+    }
+  }
+}

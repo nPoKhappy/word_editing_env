@@ -1,11 +1,36 @@
 # Word editing workspace
 
+## OfficeCLI-first integration
+
+The user requested replacing general Python Office manipulation with OfficeCLI
+in this checkout (`D:\word_editing_env_officeCLI`). Read
+`.agents/skills/officecli/SKILL.md` for Office tasks. Use the pinned binary via
+`scripts/officecli.ps1`, or dot-source `scripts/env.ps1` for `officecli` on PATH.
+Install/verify with `scripts/install_officecli.ps1`. The native `officecli` MCP
+server is registered in `.codex/config.toml`; reload the MCP connection to load it.
+
+Prefer OfficeCLI view/get/query/add/set/batch/validate/HTML preview for ordinary
+DOCX/XLSX/PPTX operations. For closed DOCX body replacements, use
+`scripts/edit_office.ps1 -InputPath ... -Changes ... -OutputPath ...`; it keeps
+the source, stages edits, checks readback, and runs native directory/font QA.
+The direct CLI/MCP does not enforce these guards. Flush/close residents before
+external readers. Never edit the saved package while the same file is open in
+Word; use the live native editor described below for that case.
+
+This routing takes precedence over older skills' default Python/XML authoring
+recipes. Preserve the existing formatting, citation, caption, directory and
+rendered QA requirements. EndNote/CWYW and live Word remain native. For final
+directory updates use `scripts/finalize_word.py`, not OfficeCLI's whole-field
+`refresh`, which can touch ADDIN fields. OfficeCLI HTML/watch previews do not
+establish final Word pagination. See `docs/officecli-integration.md` and the
+verified replay boundaries in `docs/officecli-chat-replay-results.md`.
+
 For DOCX work in this folder, read `.agents/skills/word-editing/SKILL.md`.
 For targeted text edits in existing DOCX files, also read
 `.agents/skills/docx-text-ops/SKILL.md`. For visual style changes, read
 `.agents/skills/docx-design-ops/SKILL.md`.
 Use `.venv/Scripts/python.exe` for Python commands. Set `TEMP` and `TMP` to
-`D:\word_editing_env\.tmp` before importing `win32com.client` or running Word
+`D:\word_editing_env_officeCLI\.tmp` before importing `win32com.client` or running Word
 automation, because this environment cannot write to the default temp folder.
 For Word text added in this workspace, use 標楷體 for Chinese and Times New Roman
 for English/Latin text, as described in the local word-editing skill.
@@ -55,7 +80,7 @@ count as in-text mentions.
 ## Open or closed Word documents
 
 The user prefers watching edits in Word on a second monitor. For main-body
-literal text edits, use `scripts/edit_word.py` with `--changes` and an explicit
+literal text edits in an open Word document, use `scripts/edit_word.py` with `--changes` and an explicit
 `--output` or user-authorized `--in-place`. It attaches to the exact open
 document, refreshes after each edit, and leaves existing Word windows open.
 Closed targets run in a background Word instance; `--visible` opens a review

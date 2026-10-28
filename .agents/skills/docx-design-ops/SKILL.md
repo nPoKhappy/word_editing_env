@@ -15,6 +15,11 @@ license: Original work, no third-party license constraints
 
 # DOCX Design Operations Skill
 
+Workspace override: prefer [OfficeCLI](../officecli/SKILL.md) semantic style and
+run properties for requested design changes. Inspect and preserve the existing
+design before editing, use copied files, and retain native Word/font/render QA.
+Use the older XML recipes below only for demonstrated OfficeCLI gaps.
+
 [日本語](SKILL.ja.md)
 
 Visual design editing for existing `.docx` files. Changes fonts, colors, heading styles, paragraph spacing, and the document theme while preserving all text content, images, tables, and relationships.

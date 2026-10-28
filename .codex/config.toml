@@ -1,45 +1,45 @@
 
 
 [mcp_servers.endnote-word-local]
-command = 'D:\word_editing_env\.venv\Scripts\python.exe'
-args = ['-X', 'utf8', 'D:\word_editing_env\.agents\skills\endnote-word\scripts\endnote_mcp.py']
-cwd = 'D:\word_editing_env'
+command = 'D:\word_editing_env_officeCLI\.venv\Scripts\python.exe'
+args = ['-X', 'utf8', 'D:\word_editing_env_officeCLI\.agents\skills\endnote-word\scripts\endnote_mcp.py']
+cwd = 'D:\word_editing_env_officeCLI'
 enabled = true
 startup_timeout_sec = 15
 tool_timeout_sec = 150
 
 [mcp_servers.endnote-word-local.env]
-TEMP = 'D:\word_editing_env\.tmp'
-TMP = 'D:\word_editing_env\.tmp'
+TEMP = 'D:\word_editing_env_officeCLI\.tmp'
+TMP = 'D:\word_editing_env_officeCLI\.tmp'
 ENDNOTE_WORD_POWERSHELL = 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
 ENDNOTE_WORD_TIMEOUT_SECONDS = '120'
 ENDNOTE_READY_TIMEOUT_MS = '20000'
 PYTHONDONTWRITEBYTECODE = '1'
 
 [mcp_servers.endnote-library-search]
-command = 'D:\word_editing_env\.venv\Scripts\python.exe'
-args = ['-X', 'utf8', 'D:\word_editing_env\.agents\skills\endnote-word\scripts\endnote_library_runner.py', 'serve']
-cwd = 'D:\word_editing_env'
+command = 'D:\word_editing_env_officeCLI\.venv\Scripts\python.exe'
+args = ['-X', 'utf8', 'D:\word_editing_env_officeCLI\.agents\skills\endnote-word\scripts\endnote_library_runner.py', 'serve']
+cwd = 'D:\word_editing_env_officeCLI'
 enabled = true
 startup_timeout_sec = 30
 tool_timeout_sec = 150
 
 [mcp_servers.endnote-library-search.env]
-TEMP = 'D:\word_editing_env\.tmp'
-TMP = 'D:\word_editing_env\.tmp'
+TEMP = 'D:\word_editing_env_officeCLI\.tmp'
+TMP = 'D:\word_editing_env_officeCLI\.tmp'
 PYTHONDONTWRITEBYTECODE = '1'
 
 [mcp_servers.endnote-reference-check]
 command = 'C:\Program Files\nodejs\node.exe'
-args = ['--import', 'file:///D:/word_editing_env/.tools/endnote/citecheck/node_modules/tsx/dist/loader.mjs', 'D:\word_editing_env\.tools\endnote\citecheck\node_modules\@jhlee0619\citecheck\src\mcp.ts']
-cwd = 'D:\word_editing_env'
+args = ['--import', 'file:///D:/word_editing_env_officeCLI/.tools/endnote/citecheck/node_modules/tsx/dist/loader.mjs', 'D:\word_editing_env_officeCLI\.tools\endnote\citecheck\node_modules\@jhlee0619\citecheck\src\mcp.ts']
+cwd = 'D:\word_editing_env_officeCLI'
 enabled = true
 startup_timeout_sec = 20
 tool_timeout_sec = 150
 disabled_tools = ['apply_reference_rewrite']
 
 [mcp_servers.endnote-reference-check.env]
-CITECHECK_PYTHON = 'D:\word_editing_env\.venv\Scripts\python.exe'
+CITECHECK_PYTHON = 'D:\word_editing_env_officeCLI\.venv\Scripts\python.exe'
 REFFORGE_ENABLE_SEMANTIC_SCHOLAR = 'true'
 REFFORGE_HTTP_TIMEOUT_MS = '7000'
 REFFORGE_HTTP_MAX_RETRIES = '0'
@@ -47,5 +47,20 @@ REFFORGE_PUBMED_RETRIES = '0'
 REFFORGE_CROSSREF_RETRIES = '0'
 REFFORGE_ARXIV_RETRIES = '0'
 REFFORGE_SEMANTIC_SCHOLAR_RETRIES = '0'
-TEMP = 'D:\word_editing_env\.tmp'
-TMP = 'D:\word_editing_env\.tmp'
+TEMP = 'D:\word_editing_env_officeCLI\.tmp'
+TMP = 'D:\word_editing_env_officeCLI\.tmp'
+[mcp_servers.officecli]
+command = 'D:\word_editing_env_officeCLI\.tools\officecli\officecli.exe'
+args = ['mcp']
+cwd = 'D:\word_editing_env_officeCLI'
+enabled = true
+startup_timeout_sec = 20
+tool_timeout_sec = 150
+
+[mcp_servers.officecli.env]
+TEMP = 'D:\word_editing_env_officeCLI\.tmp'
+TMP = 'D:\word_editing_env_officeCLI\.tmp'
+OFFICECLI_SKIP_UPDATE = '1'
+OFFICECLI_NO_AUTO_RESIDENT = '1'
+OFFICECLI_RESIDENT_FLUSH = 'each'
+OFFICECLI_BATCH_ALLOW_STDIN_REDIRECT = '1'

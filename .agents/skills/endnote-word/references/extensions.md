@@ -17,10 +17,10 @@ An existing exact record returns `already_present` and its real record number. C
 One-shot use works before an app reload. Save UTF-8 JSON arguments to a file, then:
 
 ```powershell
-$env:TEMP = $env:TMP = 'D:\word_editing_env\.tmp'
-& 'D:\word_editing_env\.venv\Scripts\python.exe' -X utf8 `
-  'D:\word_editing_env\.agents\skills\endnote-word\scripts\endnote_mcp.py' `
-  --call import_verified_endnote_reference --arguments 'D:\word_editing_env\.tmp\import-arguments.json'
+$env:TEMP = $env:TMP = 'D:\word_editing_env_officeCLI\.tmp'
+& 'D:\word_editing_env_officeCLI\.venv\Scripts\python.exe' -X utf8 `
+  'D:\word_editing_env_officeCLI\.agents\skills\endnote-word\scripts\endnote_mcp.py' `
+  --call import_verified_endnote_reference --arguments 'D:\word_editing_env_officeCLI\.tmp\import-arguments.json'
 ```
 
 ## Installed capabilities
@@ -47,7 +47,7 @@ The original native CWYW rendering/style/format/import tools remain available. U
 
 ## Runtime and source reuse
 
-Dependencies are isolated in `D:\word_editing_env\.tools\endnote`, excluded from Git. The main workspace venv was not populated with the large search stack. Versions, 75 Python packages and the installed Windows patch hash are recorded in `.tools/endnote/installed-manifest.json`.
+Dependencies are isolated in `D:\word_editing_env_officeCLI\.tools\endnote`, excluded from Git. The main workspace venv was not populated with the large search stack. Versions, 75 Python packages and the installed Windows patch hash are recorded in `.tools/endnote/installed-manifest.json`.
 
 - [endnote-for-word](https://github.com/felimet/endnote-for-word), vendored MIT commit `69a5bb2be8d12e4129654df5fb30da3886139fb0`: native RIS and CWYW. Local readiness compatibility patch is disclosed in `upstream.json`.
 - [endnote-mcp](https://github.com/gokmengokhan/endnote-mcp) 1.4.13: metadata/PDF/semantic search, installed with semantic dependencies, Torch 2.9.1+cpu and the cached all-MiniLM-L6-v2 model. Runtime adapter preserves nested attachment paths; normal serving is offline with telemetry disabled.

@@ -5,7 +5,7 @@ description: "在 Word DOCX 新增、修改、移動或刪除圖、三線表與�
 
 # Word 原生圖表公式標號與目錄
 
-此技能適用於 `D:\word_editing_env`。與 [word-editing](../word-editing/SKILL.md) 配合；既有文件的文字或樣式修改亦遵循對應 docx-text-ops / docx-design-ops。使用工作區 `.venv/Scripts/python.exe`，在匯入 Word COM 前設定 `TEMP`、`TMP` 為工作區 `.tmp`。
+此技能適用於 `D:\word_editing_env_officeCLI`。與 [word-editing](../word-editing/SKILL.md) 配合；既有文件的文字或樣式修改亦遵循對應 docx-text-ops / docx-design-ops。使用工作區 `.venv/Scripts/python.exe`，在匯入 Word COM 前設定 `TEMP`、`TMP` 為工作區 `.tmp`。
 
 ## 必須成立的結果
 

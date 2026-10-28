@@ -6,6 +6,12 @@ license: Original work, no third-party license constraints
 
 # DOCX Text Operations Skill
 
+Workspace override: use [OfficeCLI](../officecli/SKILL.md) and
+`scripts/edit_office.ps1` for supported closed-DOCX text edits. Use the native
+editor for open Word buffers and protected field ranges. The older unpack/edit/
+pack recipes below are fallbacks when OfficeCLI lacks the necessary capability;
+their preservation constraints still apply.
+
 [日本語](SKILL.ja.md)
 
 Text-only editing of existing `.docx` files. Preserves styles, images, tables, numbering, and relationships.
