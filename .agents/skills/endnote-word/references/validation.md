@@ -53,3 +53,15 @@ In-place publication, 2026-10-07 (server 1.1.0): both targeted citation tools no
 - Native Word/CWYW check: isolated thesis copy `D:/word_editing_env/.tmp/endnote-inplace-check-kll9o6qy/test.docx`. Removed record 51 and then inserted the actual Kazempour 2017 library record, using the same input filename and no output path. Stored native citation/bibliography counts were 0/0 after removal and 1/1 after insertion. Both backups were byte-identical to their respective pre-operation inputs; other body text was preserved.
 - A duplicate insertion was refused with the working document unchanged and no additional backup. The test directory retained only one working DOCX. The user's original thesis hash was unchanged by the integration test. Detailed results: `D:/word_editing_env/.tmp/endnote-inplace-check-kll9o6qy/report.json`.
 - Existing app sessions still have the previously loaded tool schema until MCP reload/application restart. The updated one-shot CLI is usable immediately. These integration checks establish publication and native citation fields; they do not assert a new page-layout review for the test copy.
+
+
+## 2026-10-30 native creation/import/CWYW repair replay
+
+- New `D:\computer_vision_endnote.enl` was created using EndNote File > New through authorized Computer Use. All stored references including trash were confirmed zero. Its closed, complete native pair was saved as `templates/endnote-empty/NativeEmpty.enl` and `NativeEmpty.Data` for later template cloning.
+- Schema-only SQLite construction was attempted on isolated new files and rejected by native EndNote. Those diagnostic files are unsupported and were not delivered or exposed as an MCP factory. No existing library database was directly edited.
+- Four DOI-verified CV papers were prepared through Crossref/DataCite. A malformed combined RIS with trimmed ER endings reproduced zero imports. Preserving the original `ER  - ` trailing space and CRLF separators let the ResearchSoft helper import 0 -> 4 records in the exact new library. Every DOI/title and actual assigned record number was queried again.
+- Word native probe and installed style discovery succeeded. The repaired owned-copy Save path rendered four genuine EN.CITE fields and one EN.REFLIST, with four DOI hyperlinks. Native directory finalization preserves ADDIN fields. Final 2-page Word/PDF QA and validation reports are under `outputs/cv_endnote_native`.
+- The stored-field inspector was cross-checked on the earlier 33-citation, 22-reference document: it now agrees with native Word and handles both nested DATA citations instead of undercounting 31.
+- Local regression suite: 63 tests passed with TEMP/TMP set to the workspace `.tmp`; the prior unconfigured temp path exposed an unrelated short/long Windows path assertion mismatch.
+
+These results apply to this EndNote 2025 / Word installation. This replay used Computer Use for new-library creation; search, native import, CWYW, PDF export and QA used programmatic tools. Reload an existing MCP connection to load updated Python code; the one-shot CLI reads it immediately.

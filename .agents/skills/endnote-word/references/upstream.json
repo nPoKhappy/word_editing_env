@@ -4,7 +4,11 @@
   "license": "MIT",
   "vendor_changes": [
     "Normalized fixture-references.ris to required CRLF.",
-    "Windows native import readiness: accept EndNote window titles with or without .enl; confirm exact open library via process handles instead of stale MRU registry state."
+    "Windows native import readiness: accept EndNote window titles with or without .enl; confirm exact open library via process handles instead of stale MRU registry state.",
+    "Resolve installed ResearchSoft Risweb32.exe for Direct Export; validate RIS ER terminators before native launch.",
+    "Confirm exact library open-file handles across multiple windows; accept native title variants.",
+    "Use Document.Save on the owned CWYW working copy and stage its saved package for atomic publication instead of SaveAs2.",
+    "Discover Windows platform and Common Program Files paths when optional environment variables are missing."
   ],
   "local_extensions": [
     "Manual group search",
@@ -14,6 +18,8 @@
     "Verified title/DOI/link/PDF DOI native import and deduplication",
     "Transactional batch CWYW editing",
     "JTICE preflight and record/term/style diagnostics",
-    "Existing citecheck, endnote-mcp and EndNote CLI read-only adapters"
+    "Existing citecheck, endnote-mcp and EndNote CLI read-only adapters",
+    "Missing-library preview and template forwarding for verified imports; DataCite Preprint to RIS UNPB.",
+    "Decode native nested base64 fldData traveling-library payloads; set child Python from the MCP interpreter."
   ]
 }

@@ -1,6 +1,7 @@
 """Read-only manual group access and surgical Word operations using the vendored MCP."""
 from __future__ import annotations
 import hashlib
+import base64
 from collections import Counter
 import json
 import os
@@ -127,13 +128,22 @@ def inspect_document(path):
                 if elem.tag == W+'fldChar':
                     kind = elem.get(W+'fldCharType')
                     if kind == 'begin':
-                        stack.append({'code': '', 'result': '', 'part': name, '_result': False})
+                        payload = elem.find(W+'fldData')
+                        encoded = payload.text if payload is not None else ''
+                        decoded = base64.b64decode(''.join(encoded.split()), validate=True).decode('utf-8').rstrip('\x00') if encoded else ''
+                        stack.append({'code': '', 'result': '', 'data': decoded, 'part': name, '_result': False})
                     elif kind == 'separate' and stack:
                         stack[-1]['_result'] = True
                     elif kind == 'end' and stack:
                         item = stack.pop()
                         item.pop('_result')
                         fields.append(item)
+                        # Preserve nested visible results and native traveling-library data.
+                        if stack:
+                            if stack[-1]['_result']:
+                                stack[-1]['result'] += item['result']
+                            elif re.match(r'^\s*ADDIN EN\.CITE\.DATA(?:\s|$)', item['code']):
+                                stack[-1]['data'] = stack[-1].get('data') or item.get('data', '') or item['result']
                 elif elem.tag == W+'instrText' and stack:
                     stack[-1]['code'] += elem.text or ''
                 elif elem.tag == W+'t' and stack and stack[-1]['_result']:
@@ -149,8 +159,11 @@ def inspect_document(path):
     citations, bibliographies = [], []
     for field in fields:
         code = field['code'].strip()
-        if re.match(r'^ADDIN EN\.CITE\s', code):
-            fragment = code[code.index('<EndNote>'):].strip()
+        if re.match(r'^ADDIN EN\.CITE(?:\s|$)', code):
+            fragment = (code[code.index('<EndNote>'):] if '<EndNote>' in code
+                        else field.get('data', '')).strip()
+            if not fragment:
+                raise ValueError('Native EN.CITE field has no traveling-library payload.')
             data = ET.fromstring(fragment)
             records = []
             for cite in data.findall('./Cite'):
@@ -204,7 +217,10 @@ def _invoke_local(config, work):
     command = [executable, '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
                '-File', str(ROOT/'scripts/edit-citation.ps1'), '-ConfigPath', str(config_path)]
     before = upstream._snapshot_watched_pids()
-    timeout = int(os.environ.get('ENDNOTE_WORD_TIMEOUT_SECONDS', '120'))
+    timeout = config.get('timeout_seconds', os.environ.get('ENDNOTE_WORD_TIMEOUT_SECONDS', '120'))
+    if isinstance(timeout, bool) or not str(timeout).isdigit() or not 1 <= int(timeout) <= 1800:
+        raise ValueError('timeout_seconds must be an integer between 1 and 1800.')
+    timeout = int(timeout)
     try:
         completed = subprocess.run(command, capture_output=True, text=True, encoding='utf-8',
                                    errors='replace', timeout=timeout,

@@ -109,9 +109,24 @@ def worker(args):
                     for cell_index, cell in enumerate(table.Range.Cells, 1):
                         check_font(report, f'table {index}: cell {cell_index}',
                                    cell.Range.Font, cell.Range.Text)
-                    for row in table.Rows:
-                        marker = doc.Range(row.Range.End - 1, row.Range.End)
-                        check_font(report, f'table {index}: row {row.Index} marker',
+                    try:
+                        for row in table.Rows:
+                            marker = doc.Range(row.Range.End - 1, row.Range.End)
+                            check_font(report, f'table {index}: row {row.Index} marker',
+                                       marker.Font)
+                    except Exception as exc:
+                        # Word refuses Rows access for vertically merged cells.
+                        # Use native cell endpoints instead of Python text offsets:
+                        # Word's table terminators do not map one-to-one to text.
+                        if '25471' not in str(exc) and '-2146822297' not in str(exc):
+                            raise
+                        for cell_index, cell in enumerate(table.Range.Cells, 1):
+                            marker = doc.Range(cell.Range.End - 1, cell.Range.End)
+                            check_font(report,
+                                       f'table {index}: cell {cell_index} end marker',
+                                       marker.Font)
+                        marker = doc.Range(table.Range.End - 1, table.Range.End)
+                        check_font(report, f'table {index}: final row marker',
                                    marker.Font)
                 else:
                     check_font(report, f'table {index} containing {needle!r}',

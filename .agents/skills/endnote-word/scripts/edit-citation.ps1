@@ -19,7 +19,7 @@ function Get-CitationXml {
     param($Field)
     $code = [string]$Field.Code.Text
     $start = $code.IndexOf('<EndNote>')
-    if ($start -lt 0) { throw 'Citation contains no traveling-library XML.' }
+    if ($start -lt 0) { throw 'This citation stores traveling-library XML in fldData or a nested field; native move/remove cannot safely inspect it.' }
     $xml = New-Object System.Xml.XmlDocument
     $xml.XmlResolver = $null
     $xml.LoadXml($code.Substring($start).Trim())
@@ -79,6 +79,7 @@ public static class EndNoteWordPid {
         $point = if (($config.PSObject.Properties.Name -contains 'position') -and $config.position -eq 'before') {$anchor.Start} else {$anchor.End}
     }
     if ($config.action -eq 'insert') {
+        if ($null -eq $anchor) {
         foreach ($field in @(Get-Cites)) {
             if ($field.Code.Start -ge $paragraph.Start -and $field.Code.Start -lt $paragraph.End) {
                 $xml = Get-CitationXml $field
@@ -86,6 +87,7 @@ public static class EndNoteWordPid {
                     if ([int]$cite.RecNum -eq [int]$config.rec_number -and $null -eq $anchor) { throw 'This record is already cited in the target paragraph.' }
                 }
             }
+        }
         }
         if ($null -eq $anchor) {$point = $paragraph.End - 1}
         $temp = '{' + $config.record.first_author_surname + ', ' + $config.record.year + ' #' + $config.rec_number + '}'
@@ -167,7 +169,9 @@ public static class EndNoteWordPid {
             foreach ($field in @($doc.Fields | Where-Object { $_.Code.Text -match '^\s*ADDIN EN\.REFLIST' })) {$field.Delete()}
             foreach ($variable in @($doc.Variables)) {if ($variable.Name -eq 'EN.Libraries') {$variable.Delete()}}
         }
-        if (@(Get-Cites).Count -ne $batchExpected) {throw 'Final batch citation count did not match; no output published.'}
+        # Adjacent temporary citations may be combined into a single native
+        # field. The caller validates every record occurrence and destination
+        # offline before publishing; do not equate field count with references.
     }
     $doc.Save()
     $answer = [ordered]@{ok=$true;action=$rootConfig.action;owned_word_pid=$ownPid;citation_count=@(Get-Cites).Count;

@@ -603,7 +603,7 @@ function Get-CwywTemplatePath {
     if ($null -ne $script:CwywTemplateCache) { return $script:CwywTemplateCache }
     $best = $null
     $bestVersion = $null
-    foreach ($commonFiles in @($env:CommonProgramFiles, ${env:CommonProgramFiles(x86)})) {
+    foreach ($commonFiles in @($env:CommonProgramFiles, ${env:CommonProgramFiles(x86)}, [Environment]::GetFolderPath('CommonProgramFiles'), [Environment]::GetFolderPath('CommonProgramFilesX86'))) {
         if ([string]::IsNullOrWhiteSpace($commonFiles)) { continue }
         $root = Join-Path $commonFiles $script:CwywRelativePath
         if (-not (Test-Path -LiteralPath $root -PathType Container)) { continue }
@@ -832,8 +832,16 @@ function Save-DocumentAtomically {
     $script:TemporarySaveDestination = $Destination
     try {
         Write-Log -Level INFO -Message "Saving temporary DOCX: $temporary"
-        $script:Document.SaveAs2($temporary, $script:WdFormatXmlDocument)
-        Write-Log -Level INFO -Message 'Word SaveAs2 returned.'
+        # Every edit runs on our own DOCX working copy. SaveAs2 can block after CWYW.
+        # Save that existing copy, then snapshot the saved package for atomic publication.
+        $savedPath = [string]$script:Document.FullName
+        if (-not (Test-EndNoteSamePath -Left $savedPath -Right $script:WorkingCopyPath)) {
+            throw 'Refusing to save outside the owned working copy.'
+        }
+        $script:Document.Save()
+        if (-not $script:Document.Saved) { throw 'Word did not confirm that the working copy was saved.' }
+        Copy-Item -LiteralPath $savedPath -Destination $temporary -ErrorAction Stop
+        Write-Log -Level INFO -Message 'Word Save returned; saved package staged for publication.'
         Stop-Word
         Move-Item -LiteralPath $temporary -Destination $Destination -Force
         Write-Log -Level INFO -Message "Moved completed DOCX to: $Destination"
@@ -1028,7 +1036,9 @@ function Test-EndNoteImportWindowTitle {
     param([string]$Title,[string]$LibraryFile)
     $name = [IO.Path]::GetFileName($LibraryFile)
     $stem = [IO.Path]::GetFileNameWithoutExtension($LibraryFile)
-    return ($Title.EndsWith(' - ' + $name,[StringComparison]::OrdinalIgnoreCase) -or
+    return ([string]::Equals($Title,$name,[StringComparison]::OrdinalIgnoreCase) -or
+            [string]::Equals($Title,$stem,[StringComparison]::OrdinalIgnoreCase) -or
+            $Title.EndsWith(' - ' + $name,[StringComparison]::OrdinalIgnoreCase) -or
             $Title.EndsWith(' - ' + $stem,[StringComparison]::OrdinalIgnoreCase))
 }
 
@@ -1073,9 +1083,9 @@ function Open-EndNoteLibraryForImport {
         $recentLibrary = Get-EndNoteMostRecentLibraryPath
         foreach ($process in @(Get-Process -Name $script:EndNoteProcessName -ErrorAction SilentlyContinue)) {
             $confirmation = $null
-            if ($process.MainWindowHandle -ne 0 -and (Test-EndNoteImportWindowTitle $process.MainWindowTitle $fullLibrary)) {
-                $confirmation = Get-EndNoteNativeLibraryConfirmation -ProcessId $process.Id -LibraryFile $fullLibrary
-            }
+            # A process can own several library windows; MainWindowTitle describes only one.
+            # The exact open-file handle is authoritative for the requested target.
+            $confirmation = Get-EndNoteNativeLibraryConfirmation -ProcessId $process.Id -LibraryFile $fullLibrary
             if ($null -ne $confirmation -and $confirmation.ok) {
                 return [ordered]@{
                     preexisting = $preexisting
@@ -1909,7 +1919,7 @@ function Invoke-Probe {
     }
 
     $checks = [ordered]@{
-        windows                  = $env:OS -eq 'Windows_NT'
+        windows                  = [Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT
         powershell               = $PSVersionTable.PSVersion.ToString()
         word_com                 = $null -ne $wordVersion
         word_version             = $wordVersion
@@ -2279,6 +2289,21 @@ function Invoke-Unformat {
         })
 }
 
+function Get-EndNoteDirectExportHelper {
+    # A RIS file is routed through the installed ResearchSoft helper, not EndNote.exe.
+    $commonDirectories = @($env:CommonProgramFiles, ${env:CommonProgramFiles(x86)},
+        [Environment]::GetFolderPath('CommonProgramFiles'),
+        [Environment]::GetFolderPath('CommonProgramFilesX86'))
+    foreach ($directory in $commonDirectories) {
+        if ([string]::IsNullOrWhiteSpace($directory)) { continue }
+        $candidate = Join-Path $directory 'Risxtd\Risweb32.exe'
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+            return (Resolve-Path -LiteralPath $candidate).Path
+        }
+    }
+    throw 'ResearchSoft Direct Export Helper (Risweb32.exe) was not found. Repair the EndNote Direct Export installation; no RIS import was attempted.'
+}
+
 function Invoke-ImportRis {
     if ([string]::IsNullOrWhiteSpace($LibraryPath)) { throw 'import-ris requires LibraryPath.' }
     if ([string]::IsNullOrWhiteSpace($RisPath)) { throw 'import-ris requires RisPath.' }
@@ -2293,6 +2318,12 @@ function Invoke-ImportRis {
         throw 'RisPath contains no RIS records (no line beginning with TY  - ).'
     }
 
+    # The native RIS reader requires the space after the ER delimiter. Never trim RIS records.
+    $risEndCount = [regex]::Matches($risText, '(?m)^ER  - [^\r\n]*\r?$').Count
+    if ($risEndCount -ne $risRecordCount) {
+        throw 'Invalid RIS record endings: preserve the trailing space in ER  -  and all record separators. No import was attempted.'
+    }
+
     $resolved = Resolve-EndNoteImportLibrary -TargetPath $LibraryPath -EmptyTemplatePath $EmptyLibraryTemplatePath
     $library = $resolved.library
     $beforeCount = Get-EndNoteRecordCount -LibraryFile $library.path
@@ -2300,10 +2331,11 @@ function Invoke-ImportRis {
     if ($null -eq $installation) {
         throw 'EndNote is not installed or could not be discovered, so RIS cannot be imported through EndNote Direct Export.'
     }
+    $directExportHelper = Get-EndNoteDirectExportHelper
     $opened = Open-EndNoteLibraryForImport -LibraryFile $library.path -Installation $installation
 
     Write-Log -Level INFO -Message "Sending RIS to EndNote Direct Export: $resolvedRis"
-    Start-Process -FilePath $installation.executable -ArgumentList ('"' + $resolvedRis + '"') -WindowStyle Hidden | Out-Null
+    Start-Process -FilePath $directExportHelper -ArgumentList ('"' + $resolvedRis + '"') -WindowStyle Hidden | Out-Null
 
     $afterCount = $beforeCount
     $deadline = [DateTime]::UtcNow.AddMilliseconds($script:EndNoteReadyTimeoutMilliseconds)
@@ -2338,7 +2370,8 @@ function Invoke-ImportRis {
             endnote_preexisting_target   = [bool]$opened.preexisting
             endnote_window_title         = $opened.title
             confirmed_library_path       = $opened.confirmed_library_path
-            import_route                 = 'EndNote Direct Export'
+            import_route                 = 'ResearchSoft Direct Export Helper'
+            import_helper_path           = $directExportHelper
             note                         = $note
         })
     if ($importedCount -eq 0) { exit 3 }

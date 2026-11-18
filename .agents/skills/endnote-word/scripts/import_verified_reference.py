@@ -82,6 +82,8 @@ def resolve(args):
 
 
 def _existing(library_path, found):
+    if not Path(library_path).is_file():
+        return []
     records = metadata._records({'library_path': library_path})
     matches = []
     for record in records:
@@ -112,7 +114,8 @@ def import_reference(args):
     types = {'journal-article': 'JOUR', 'book': 'BOOK', 'edited-book': 'EDBOOK',
              'book-chapter': 'CHAP', 'proceedings-article': 'CPAPER', 'proceedings': 'CONF',
              'posted-content': 'UNPB', 'report': 'RPRT', 'dissertation': 'THES',
-             'JournalArticle': 'JOUR', 'Book': 'BOOK', 'BookChapter': 'CHAP', 'Dataset': 'DATA'}
+             'JournalArticle': 'JOUR', 'Book': 'BOOK', 'BookChapter': 'CHAP', 'Dataset': 'DATA',
+             'Preprint': 'UNPB'}
     kind = types.get(found['publication_type'])
     if not kind:
         return {'ok': False, 'status': 'unsupported_reference_type', 'metadata': found, 'library_modified': False}
@@ -128,8 +131,15 @@ def import_reference(args):
     if args.get('preview_only', False):
         return {'ok': True, 'status': 'ready_for_native_import', 'metadata': found, 'ris_path': str(ris),
                 'missing_publication_fields': missing, 'library_modified': False}
-    # The existing bridge confirms the exact target library and uses EndNote Direct Export.
-    bridge = local.upstream._invoke_bridge('import-ris', {'library_path': str(library), 'ris_path': str(ris)})
+    # A missing library needs an actual native empty template, never a fabricated database.
+    if not library.is_file() and not args.get('empty_library_template_path'):
+        return {'ok': False, 'status': 'needs_empty_library_template', 'metadata': found,
+                'ris_path': str(ris), 'library_modified': False,
+                'error': 'The target library does not exist. Provide a closed, native zero-record .enl/.Data template. Native from-scratch initialization is not implemented.'}
+    native_args = {'library_path': str(library), 'ris_path': str(ris)}
+    if args.get('empty_library_template_path'):
+        native_args['empty_library_template_path'] = args['empty_library_template_path']
+    bridge = local.upstream._invoke_bridge('import-ris', native_args)
     after = _existing(str(library), found)
     success = len(after) == 1 and metadata.norm(after[0]['title']) == metadata.norm(found['title'])
     report = {'ok': success, 'status': 'imported' if success else 'import_not_confirmed',

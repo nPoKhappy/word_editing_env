@@ -8,6 +8,31 @@ import shutil
 import tempfile
 import time
 import local_endnote as local
+from anchor_validator import verify_anchors
+from bibliography_validator import verify_bibliography
+
+
+class TemporaryWork:
+    """Clean up without masking the bridge failure or any validation exception."""
+    def __init__(self, parent):
+        self._temp = tempfile.TemporaryDirectory(prefix='endnote-batch-', dir=parent)
+        self.path = self._temp.name
+        self.result = None
+        self.warning = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, typ, exc, tb):
+        try:
+            self._temp.cleanup()
+        except OSError as cleanup:
+            self.warning = {'path': self.path, 'error': str(cleanup)}
+            if self.result is not None:
+                self.result['cleanup_warning'] = self.warning
+            if exc is not None:
+                exc.args = (f'{exc}; temporary cleanup failed at {self.path}: {cleanup}',)
+        return False
 
 
 def identities(document):
@@ -29,6 +54,9 @@ def edit_batch(args):
     operations = args['operations']
     if not isinstance(operations, list) or not 1 <= len(operations) <= 50:
         raise ValueError('A batch must contain 1-50 operations.')
+    timeout = args.get('timeout_seconds')
+    if timeout is not None and (type(timeout) is not int or not 1 <= timeout <= 1800):
+        raise ValueError('timeout_seconds must be an integer between 1 and 1800.')
     original_hash = hashlib.sha256(source.read_bytes()).hexdigest()
     before = local.inspect_document(source)
     if any(c['part'] != 'word/document.xml' for c in before['citations']):
@@ -73,20 +101,27 @@ def edit_batch(args):
             expected[keys[0]] -= 1
             expected_count -= 1
         prepared.append(op)
-    with tempfile.TemporaryDirectory(prefix='endnote-batch-', dir=output.parent) as work:
+    with TemporaryWork(output.parent) as temporary:
+        work = temporary.path
         scratch = Path(work) / 'working.docx'
         shutil.copy2(source, scratch)
-        bridge = local._invoke_local({'action': 'batch', 'scratch_path': str(scratch), 'operations': prepared}, work)
+        config = {'action': 'batch', 'scratch_path': str(scratch), 'operations': prepared}
+        if timeout is not None:
+            config['timeout_seconds'] = timeout
+        bridge = local._invoke_local(config, work)
         if not bridge.get('ok'):
-            return {'ok': False, 'error': 'Native batch failed; no output published.', 'bridge': bridge}
+            temporary.result = {'ok': False, 'error': 'Native batch failed; no output published.', 'bridge': bridge}
+            return temporary.result
         after = local.inspect_document(scratch)
-        if after['citation_count'] != expected_count or identities(after) != +expected:
-            raise ValueError('Final native citation count or identity differs from the planned batch.')
+        if identities(after) != +expected:
+            raise ValueError('Final native citation identities differ from the planned batch.')
+        anchor_check = verify_anchors(source, scratch, prepared)
+        bibliography_check = verify_bibliography(after)
         if local.body_content(source) != local.body_content(scratch):
             raise ValueError('Unrelated body text changed; no output published.')
-        if expected_count and not any(b['result'].strip() for b in after['bibliographies']):
+        if sum(expected.values()) and not any(b['result'].strip() for b in after['bibliographies']):
             raise ValueError('Native bibliography is missing or empty.')
-        if not expected_count and after['bibliography_count']:
+        if not sum(expected.values()) and after['bibliography_count']:
             raise ValueError('Last citation removal left a bibliography.')
         if hashlib.sha256(source.read_bytes()).hexdigest() != original_hash:
             raise ValueError('Source changed during batch; no output published.')
@@ -103,9 +138,13 @@ def edit_batch(args):
             os.replace(scratch, source)
         else:
             os.rename(scratch, output)
-    return {'ok': True, 'output_path': str(output), 'backup_path': str(backup) if backup else None,
+    result = {'ok': True, 'output_path': str(output), 'backup_path': str(backup) if backup else None,
             'source_unchanged': not overwrite, 'operation_count': len(prepared),
             'citation_count_before': before['citation_count'], 'citation_count_after': after['citation_count'],
-            'other_body_text_preserved': True, 'bridge': bridge,
+            'other_body_text_preserved': True, 'bridge': bridge, 'anchor_check': anchor_check,
+            'bibliography_check': bibliography_check,
             'elapsed_seconds': round(time.perf_counter() - started, 3),
             'final_directory_and_render_qa_required': True}
+    if temporary.warning:
+        result['cleanup_warning'] = temporary.warning
+    return result

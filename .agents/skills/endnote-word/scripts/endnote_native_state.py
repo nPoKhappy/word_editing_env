@@ -20,7 +20,7 @@ def confirm(pid, library_path, open_files=None):
                       if Path(p).suffix.lower() == '.enl' and Path(p).stem.casefold() == target.stem.casefold()})
     confirmed = len(matches) == 1 and matches[0].casefold() == str(target).casefold()
     return {'ok': confirmed, 'confirmed_library_path': str(target) if confirmed else None,
-            'same_name_library_count': len(matches), 'confirmation_method': 'native process open-file handles plus window title'}
+            'same_name_library_count': len(matches), 'confirmation_method': 'native process open-file handles'}
 
 
 if __name__ == '__main__':

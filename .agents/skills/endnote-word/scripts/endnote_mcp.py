@@ -1,9 +1,12 @@
 """Local EndNote MCP: upstream tools plus manual groups and targeted citation edits."""
 from __future__ import annotations
 import argparse
+import os
 import json
 import sys
 from pathlib import Path
+# Native child helpers must use this interpreter, not a Windows Store alias.
+os.environ.setdefault('ENDNOTE_WORD_PYTHON', sys.executable)
 import local_endnote as local
 import endnote_metadata as metadata
 import endnote_integrations as integrations
@@ -119,8 +122,9 @@ EXTRA.extend([
     tool('preflight_jtice_manuscript', 'Inventory an existing DOCX before drafting/translation/formatting: native citations, source omissions, tables, explicit font sizes, captions, math and journal-term diagnostics. Read-only and offline; does not replace final Word font checks, directory updates or rendered QA.',
          {'document_path': STRING, 'source_document_path': STRING, 'library_path': STRING,
           'stage': {'type': 'string', 'enum': ['draft', 'translation', 'submission'], 'default': 'draft'}}, ['document_path'], True),
-    tool('batch_edit_endnote_citations', 'Apply up to 50 native insert/move/remove operations on one temporary DOCX in one owned Word session, then format CWYW once. Validates native identities and unrelated body before atomic publication. Use for multiple edits; avoids restarting Word per citation. Insert/move require unique literal anchors; merged fields are refused.',
+    tool('batch_edit_endnote_citations', 'Apply up to 50 native insert/move/remove operations in one Word session, then format once. Verify each native record identity and exact position before atomic publication. Adjacent inserted citations may merge; moving/removing merged fields is refused.',
          {'input_path': STRING, 'output_path': STRING, 'overwrite': {'type': 'boolean', 'default': False}, 'library_path': STRING,
+          'timeout_seconds': {'type': 'integer', 'minimum': 1, 'maximum': 1800},
           'operations': {'type': 'array', 'minItems': 1, 'maxItems': 50, 'items': {'type': 'object', 'additionalProperties': False,
              'properties': {'action': {'type': 'string', 'enum': ['insert', 'move', 'remove']}, 'paragraph_text': STRING,
                             'rec_number': INTEGER, 'expected_title': STRING, 'anchor_text': STRING,
@@ -128,7 +132,8 @@ EXTRA.extend([
              'required': ['action', 'paragraph_text', 'rec_number', 'expected_title']}}}, ['input_path', 'operations'], False),
     tool('import_verified_endnote_reference', 'One workflow: resolve title/DOI/DOI-containing URL or first-page PDF DOI, require unambiguous registry identity, avoid duplicates, generate RIS, import via native EndNote and re-query actual assigned record numbers. May modify the specified library. No existing-record overwrite, no silent retry, no automatic JTICE style compliance claim. preview_only prepares evidence/RIS without import.',
          {'library_path': STRING, 'title': STRING, 'doi': STRING, 'url': STRING, 'pdf_path': STRING, 'author': STRING,
-          'year': INTEGER, 'preview_only': {'type': 'boolean', 'default': False}}, ['library_path'], False),
+          'year': INTEGER, 'empty_library_template_path': STRING,
+          'preview_only': {'type': 'boolean', 'default': False}}, ['library_path'], False),
 ])
 for entry in EXTRA:
     if entry['name'] in {'search_online_endnote_metadata', 'lookup_endnote_doi_metadata',
@@ -139,7 +144,7 @@ base.TOOLS.extend(EXTRA)
 original_call = base._call_tool
 original_handle = base._handle
 base.SERVER_NAME = 'endnote-word-local'
-base.SERVER_VERSION = '1.5.0'
+base.SERVER_VERSION = '1.5.1'
 
 
 def validate(value, schema, path='arguments'):

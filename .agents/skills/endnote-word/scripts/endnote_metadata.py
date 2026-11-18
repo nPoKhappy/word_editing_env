@@ -372,7 +372,7 @@ def export_records(args):
             raise ValueError('RIS export requires .enl: XML export type numbers differ from native SQLite type IDs.')
         # IDs checked against the installed EndNote RefTypeTableEN9.xml.
         codes = {0: 'JOUR', 1: 'BOOK', 2: 'THES', 3: 'CONF', 7: 'CHAP', 9: 'EDBOOK',
-                 10: 'RPRT', 16: 'ELEC', 28: 'EJOUR', 29: 'BOOK', 31: 'GEN', 33: 'CPAPER'}
+                 10: 'RPRT', 16: 'ELEC', 28: 'EJOUR', 29: 'BOOK', 31: 'GEN', 33: 'CPAPER', 37: 'UNPB'}
         if any(r['reference_type'] not in codes for r in records):
             raise ValueError('A reference type lacks a verified RIS mapping; use JSON to preserve its type ID.')
         payload = [{**r, 'type': codes[r['reference_type']]} for r in records]
@@ -383,7 +383,7 @@ def export_records(args):
 
 
 def capabilities(args):
-    return {'ok': True, 'version': '1.5.0',
+    return {'ok': True, 'version': '1.5.1',
             'available': ['Crossref title search', 'Crossref/DataCite DOI metadata',
                           'identity-checked correction previews', 'library/group completeness audit',
                           'duplicate candidates', 'journal terms read/merge/export preview',
@@ -398,7 +398,11 @@ def capabilities(args):
                           'hash-verified backup restoration into a new directory'],
             'third_party_packages': {'endnote-mcp': '1.4.13', '@jhlee0619/citecheck': '0.1.0',
                                      'endnote-cli': '7faca0f95c9aa89b683f61707148a2967117d608'},
-            'unavailable': {'existing_record_writeback': 'No verified native editor/RSServices RDK installed.',
+            'library_creation': {'mode': 'clone_native_empty_template',
+                                 'requires': 'Closed native .enl/.Data pair with zero stored records, including trash.',
+                                 'from_scratch_native_api': False, 'computer_use_required': False},
+            'unavailable': {'native_library_initialization': 'No verified native factory/RSServices RDK installed. Do not claim cloning is from-scratch initialization.',
+                            'existing_record_writeback': 'No verified native editor/RSServices RDK installed.',
                             'journal_term_writeback': 'No verified native term-list editor installed.',
                             'smart_group_evaluation': 'Rules are not decoded.',
                             'record_merge_delete': 'Not exposed; references and traveling-library identities must be preserved.',
