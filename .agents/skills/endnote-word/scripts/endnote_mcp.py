@@ -122,7 +122,7 @@ EXTRA.extend([
     tool('preflight_jtice_manuscript', 'Inventory an existing DOCX before drafting/translation/formatting: native citations, source omissions, tables, explicit font sizes, captions, math and journal-term diagnostics. Read-only and offline; does not replace final Word font checks, directory updates or rendered QA.',
          {'document_path': STRING, 'source_document_path': STRING, 'library_path': STRING,
           'stage': {'type': 'string', 'enum': ['draft', 'translation', 'submission'], 'default': 'draft'}}, ['document_path'], True),
-    tool('batch_edit_endnote_citations', 'Apply up to 50 native insert/move/remove operations in one Word session, then format once. Verify each native record identity and exact position before atomic publication. Adjacent inserted citations may merge; moving/removing merged fields is refused.',
+    tool('batch_edit_endnote_citations', 'Apply up to 50 native insert/move/remove operations in one Word session, then format with at most one conditional retry for unresolved temporary citations. Verify each native record identity and exact position before atomic publication. Adjacent inserted citations may merge; moving/removing merged fields is refused.',
          {'input_path': STRING, 'output_path': STRING, 'overwrite': {'type': 'boolean', 'default': False}, 'library_path': STRING,
           'timeout_seconds': {'type': 'integer', 'minimum': 1, 'maximum': 1800},
           'operations': {'type': 'array', 'minItems': 1, 'maxItems': 50, 'items': {'type': 'object', 'additionalProperties': False,

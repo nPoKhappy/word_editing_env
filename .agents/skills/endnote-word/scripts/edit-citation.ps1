@@ -15,6 +15,27 @@ $watch = [Diagnostics.Stopwatch]::StartNew()
 function Get-Cites {
     return @($doc.Fields | Where-Object { $_.Code.Text -match '^\s*ADDIN EN\.CITE\s' })
 }
+function Test-PendingCwywCitation {
+    foreach ($field in @(Get-Cites)) {
+        if ($field.Result.Text -match '\{[^{}]*#\d+[^{}]*\}') { return $true }
+    }
+    # Only inspect exact temporary strings introduced at our own target paragraphs.
+    foreach ($target in $targets) {
+        if ($target.temporary -and $target.paragraph.Text.Contains($target.temporary)) { return $true }
+    }
+    return $false
+}
+function Invoke-CwywFormat {
+    $null = $word.Run('ENFormatBibliography'); $script:formatRuns++
+    # CWYW can create native fields whose displayed results still contain
+    # temporary citations on the first pass; only then request one more pass.
+    $pending = Test-PendingCwywCitation
+    if ($pending) {
+        $null = $word.Run('ENFormatBibliography'); $script:formatRuns++
+        $pending = Test-PendingCwywCitation
+        if ($pending) { throw 'CWYW left temporary citations after two formatting passes.' }
+    }
+}
 function Get-CitationXml {
     param($Field)
     $code = [string]$Field.Code.Text
@@ -47,6 +68,7 @@ public static class EndNoteWordPid {
     $doc = $word.Documents.Open($config.scratch_path,$false,$false)
     $doc.Activate()
     if ($doc.Revisions.Count -gt 0) { throw 'Review tracked changes before citation editing.' }
+    if (@(Get-Cites | Where-Object { $_.Result.Text -match '\{[^{}]*#\d+[^{}]*\}' }).Count -gt 0) { throw 'Source contains unformatted native citations; format or resolve them before editing.' }
     $operations = @(if ($isBatch) {$config.operations} else {$config})
     $batchExpected = @(Get-Cites).Count
     $targets = @()
@@ -57,7 +79,12 @@ public static class EndNoteWordPid {
         if ($paragraphs.Count -ne 1) { throw "Expected one matching paragraph; found $($paragraphs.Count)." }
         $paragraph = $paragraphs[0].Range.Duplicate
         if ($paragraph.Information(12)) { throw 'Target paragraph is in a table; main-body paragraph editing is supported.' }
-        $targets += [pscustomobject]@{config=$operation;paragraph=$paragraph}
+        $temporary = $null
+        if ($operation.action -eq 'insert') {
+            $temporary = '{' + $operation.record.first_author_surname + ', ' + $operation.record.year + ' #' + $operation.rec_number + '}'
+            if ($paragraph.Text.Contains($temporary)) { throw 'Target paragraph already contains the temporary citation text.' }
+        }
+        $targets += [pscustomobject]@{config=$operation;paragraph=$paragraph;temporary=$temporary}
         if ($operation.action -eq 'insert') {$batchExpected++}
         elseif ($operation.action -eq 'remove') {$batchExpected--}
     }
@@ -96,7 +123,7 @@ public static class EndNoteWordPid {
         $range.Font.Name = 'Times New Roman'
         if (-not $isBatch) {
         $doc.Save()
-        $null = $word.Run('ENFormatBibliography'); $formatRuns++
+        Invoke-CwywFormat
         if (@(Get-Cites).Count -ne $initial + 1) { throw 'CWYW did not add exactly one native citation.' }
         $matching = @()
         foreach ($field in @(Get-Cites)) {
@@ -154,7 +181,7 @@ public static class EndNoteWordPid {
                 if ($variable.Name -eq 'EN.Libraries') { $variable.Delete() }
             }
         }
-        else { $null = $word.Run('ENFormatBibliography'); $formatRuns++ }
+        else { Invoke-CwywFormat }
         }
         $expected = if ($config.action -eq 'move') {$initial} else {$initial - 1}
         if (@(Get-Cites).Count -ne $expected) { throw 'Native citation count did not match the move/remove action.' }
@@ -164,7 +191,7 @@ public static class EndNoteWordPid {
     if ($isBatch) {
         if ($batchExpected -gt 0) {
             $doc.Save()
-            $null = $word.Run('ENFormatBibliography'); $formatRuns++
+            Invoke-CwywFormat
         } else {
             foreach ($field in @($doc.Fields | Where-Object { $_.Code.Text -match '^\s*ADDIN EN\.REFLIST' })) {$field.Delete()}
             foreach ($variable in @($doc.Variables)) {if ($variable.Name -eq 'EN.Libraries') {$variable.Delete()}}

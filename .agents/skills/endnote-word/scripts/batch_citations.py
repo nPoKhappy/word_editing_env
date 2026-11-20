@@ -1,4 +1,4 @@
-"""Transactional native CWYW batch editing, one Word session and one final format."""
+"""Transactional native CWYW batch editing, one Word session and one bounded final formatting stage."""
 from collections import Counter
 import hashlib
 import os
